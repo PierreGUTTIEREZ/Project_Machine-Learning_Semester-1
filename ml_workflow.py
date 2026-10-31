@@ -17,7 +17,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-DATA_DIR = Path(__file__).resolve().parent / "data"
+DATA_DIR = Path(__file__).resolve().parent
 
 
 # ---------------------------------------------------------------------------
@@ -37,8 +37,8 @@ def read_spambase_names(names_path):
 def load_spambase(data_dir=DATA_DIR):
     """Charge Spambase. Retourne (X, y) : DataFrame de 57 colonnes et Series 'spam'."""
     data_dir = Path(data_dir)
-    names = read_spambase_names(data_dir / "spambase.names")
-    df = pd.read_csv(data_dir / "spambase.data", header=None, names=names + ["spam"])
+    names = read_spambase_names(data_dir /"spambase"/"spambase.names")
+    df = pd.read_csv(data_dir /"spambase"/"spambase.data", header=None, names=names + ["spam"])
     return df.drop(columns="spam"), df["spam"].astype(int)
 
 
