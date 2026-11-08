@@ -39,7 +39,7 @@ $$
 ├── data/                      # datasets (spambase.*, diabetes_*.csv)
 ├── ml_workflow.py             # toutes les fonctions du workflow
 ├── test_ml_workflow.py        # tests unitaires
-├── spam.ipynb                 # analyse + résultats Spambase
+├── spambase.ipynb                 # analyse + résultats Spambase
 ├── diabetes.ipynb             # analyse + résultats Diabetes
 ├── requirements.txt
 └── README.md

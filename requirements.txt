@@ -1,0 +1,8 @@
+# Dépendances principales du projet
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+jupyter
+pytest
