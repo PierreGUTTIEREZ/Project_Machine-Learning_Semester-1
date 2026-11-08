@@ -13,9 +13,20 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.impute import SimpleImputer
-from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (accuracy_score, confusion_matrix, precision_score,
+                             recall_score)
+from sklearn.model_selection import cross_val_score, cross_validate, train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+import torch
+import torch.nn as nn
+from sklearn.base import BaseEstimator, ClassifierMixin
+
 
 DATA_DIR = Path(__file__).resolve().parent
 
@@ -169,3 +180,158 @@ def prepare_data(name, data_dir=DATA_DIR, drop_duplicates=True, log_cols=None,
     X_train, X_test, transformers = preprocess(
         X_train, X_test, impute_strategy, scale, pca_components, random_state)
     return X_train, X_test, y_train, y_test, transformers
+
+# ---------------------------------------------------------------------------
+# 4. Entraînement : réglage des modèles et sélection de features
+# ---------------------------------------------------------------------------
+
+def choose_k_knn(X_train, y_train, k_values):
+    """Choisit le nombre de voisins k par validation croisée (5 folds) sur le train."""
+    scores = []
+    for k in k_values:
+        knn = KNeighborsClassifier(n_neighbors=k)
+        scores.append(cross_val_score(knn, X_train, y_train).mean())
+    best_k = k_values[np.argmax(scores)]
+    return best_k, k_values, scores
+
+
+def with_feature_selection(model, n_features):
+    """Pipeline : on garde les n_features meilleures features (test ANOVA), puis le modèle.
+    La sélection est refaite à chaque fold de la validation croisée, donc pas de fuite."""
+    return make_pipeline(SelectKBest(f_classif, k=n_features), model)
+
+
+def choose_n_features(model, X_train, y_train, n_values):
+    """Choisit le nombre de features à garder par validation croisée sur le train."""
+    scores = []
+    for n in n_values:
+        pipe = with_feature_selection(model, n)
+        scores.append(cross_val_score(pipe, X_train, y_train).mean())
+    best_n = n_values[np.argmax(scores)]
+    return best_n, n_values, scores
+
+
+# ---------------------------------------------------------------------------
+# 5. Réseau de neurones
+# ---------------------------------------------------------------------------
+
+class mlp_classification_nn(nn.Module):
+
+    def __init__(self, input_size, hidden_size1, hidden_size2, output_size):
+        super().__init__()
+        self.fc0 = nn.Linear(input_size, hidden_size1)
+        self.fc1 = nn.Linear(hidden_size1, hidden_size2)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(hidden_size2, output_size)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        out = self.relu(self.fc0(x))
+        out = self.relu(self.fc1(out))
+        y_pred = self.sigmoid(self.fc2(out))
+        return y_pred
+
+
+def to_tensor(X):
+    """DataFrame / Series / array numpy -> tenseur PyTorch en float32."""
+    return torch.tensor(np.array(X)).float()
+
+
+def train_mlp(X_train, y_train, hidden_size1, hidden_size2, epochs, lr,
+              X_val=None, y_val=None):
+    """Entraîne le MLP (descente de gradient sur tout le train à chaque epoch).
+    Si on donne X_val et y_val, on garde aussi la loss de validation à chaque epoch."""
+    torch.manual_seed(42)
+    x = to_tensor(X_train)
+    y = to_tensor(y_train).reshape(-1, 1)
+    if X_val is not None:
+        x_val = to_tensor(X_val)
+        y_val = to_tensor(y_val).reshape(-1, 1)
+
+    model = mlp_classification_nn(x.shape[1], hidden_size1, hidden_size2, 1)
+    criterion = nn.BCELoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr)
+
+    losses = []
+    val_losses = []
+    for epoch in range(epochs):
+        y_pred = model(x)
+        loss = criterion(y_pred, y)
+        losses.append(loss.item())
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        if X_val is not None:
+            val_loss = criterion(model(x_val), y_val)
+            val_losses.append(val_loss.item())
+
+    return model, losses, val_losses
+
+
+def predict_mlp(model, X):
+    """Classe prédite : 1 (spam) si la probabilité en sortie dépasse 0.5, sinon 0."""
+    proba = model(to_tensor(X)).detach().numpy().ravel()
+    return (proba > 0.5).astype(int)
+
+
+class TorchMLP(BaseEstimator, ClassifierMixin):
+    """Pour utiliser notre MLP PyTorch comme un modèle scikit-learn (fit / predict),
+    et donc le passer à cross_val_score, choose_n_features, compare_models..."""
+
+    def __init__(self, hidden_size1, hidden_size2, epochs, lr):
+        self.hidden_size1 = hidden_size1
+        self.hidden_size2 = hidden_size2
+        self.epochs = epochs
+        self.lr = lr
+
+    def fit(self, X, y):
+        self.classes_ = np.unique(y)  # attendu par scikit-learn pour un classifieur
+        self.model_, self.losses_, _ = train_mlp(X, y, self.hidden_size1, self.hidden_size2,
+                                                 self.epochs, self.lr)
+        return self
+
+    def predict(self, X):
+        return predict_mlp(self.model_, X)
+
+
+# ---------------------------------------------------------------------------
+# 6. Validation et comparaison
+# ---------------------------------------------------------------------------
+
+def get_models(k_knn, class_weight):
+    """Les 4 modèles comparés.
+    class_weight = "balanced" si le dataset est déséquilibré (Diabetes), None sinon.
+    Seuls la régression logistique et le Random Forest acceptent ce paramètre."""
+    return {
+        "KNN": KNeighborsClassifier(n_neighbors=k_knn),
+        "Régression logistique": LogisticRegression(max_iter=1000, class_weight=class_weight),
+        "Random Forest": RandomForestClassifier(n_estimators=300, class_weight=class_weight,
+                                                random_state=42),
+        "Réseau de neurones": TorchMLP(32, 16, 1500, 0.1),
+    }
+
+
+def compare_models(models, X_train, y_train):
+    """Compare les modèles par validation croisée (5 folds) sur le train.
+    Le test n'est pas utilisé ici."""
+    results = {}
+    for name, model in models.items():
+        res = cross_validate(model, X_train, y_train,
+                             scoring=["accuracy", "precision", "recall"])
+        results[name] = {"accuracy": res["test_accuracy"].mean(),
+                         "précision": res["test_precision"].mean(),
+                         "rappel": res["test_recall"].mean()}
+    return pd.DataFrame(results).T
+
+
+def evaluate_on_test(model, X_test, y_test):
+    """Scores sur le test d'un modèle déjà entraîné (à faire une seule fois, à la fin)."""
+    y_pred = model.predict(X_test)
+    cm = confusion_matrix(y_test, y_pred)  # [[VN, FP], [FN, VP]]
+    return {"accuracy": accuracy_score(y_test, y_pred),
+            "précision": precision_score(y_test, y_pred),
+            "rappel": recall_score(y_test, y_pred),
+            "faux positifs": cm[0, 1],
+            "faux négatifs": cm[1, 0]}
