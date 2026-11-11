@@ -6,3 +6,4 @@ matplotlib
 seaborn
 jupyter
 pytest
+torch
