@@ -56,7 +56,7 @@ def load_spambase(data_dir=DATA_DIR):
 def load_diabetes(data_dir=DATA_DIR,
                   filename="diabetes_binary_health_indicators_BRFSS2015.csv"):
     """Charge le dataset Diabetes (BRFSS 2015). Retourne (X, y), y = 'Diabetes_binary'."""
-    df = pd.read_csv(Path(data_dir) / filename)
+    df = pd.read_csv(Path(data_dir) / "Diabete" / filename)
     return df.drop(columns="Diabetes_binary"), df["Diabetes_binary"].astype(int)
 
 
