@@ -335,3 +335,12 @@ def evaluate_on_test(model, X_test, y_test):
             "rappel": recall_score(y_test, y_pred),
             "faux positifs": cm[0, 1],
             "faux négatifs": cm[1, 0]}
+
+def add_fbeta(df, beta=2):
+    """Ajoute une colonne F-beta, calculée à partir des colonnes 'précision' et 'rappel'.
+    beta > 1 : le rappel compte plus ;
+    beta < 1 : la précision compte plus"""
+    
+    prec, rap = df["précision"], df["rappel"]
+    df[f"F{beta}"] = (1 + beta**2) * prec * rap / (beta**2 * prec + rap)
+    return df
