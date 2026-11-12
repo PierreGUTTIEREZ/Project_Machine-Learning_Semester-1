@@ -50,7 +50,7 @@ $$
 ```bash
 git clone <url-du-depot>
 cd Project_Machine-Learning_Semester-1
-python -m venv .venv && source .venv/bin/activate    # Windows : .venv\Scripts\activate
+python -m venv .venv && source .venv/bin/activate    # Windows : .venv\Scripts\activate (mettre ça avant si ça ne marche pas Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser)
 pip install -r requirements.txt
 ```
 
@@ -89,4 +89,4 @@ pytest -q
 - Pas de sorties lourdes dans les commits de notebooks : faire *Restart & Run All* avant de commit.
 
 ## Utilisation de l'IA
-L'IA a été utilisée dans le cadre de l'information sur l'ensemble des méthodes possibiles de modèles de classification binaire et sur les choix les plus pertinents pour ce sujet.
+L'IA a été utilisée dans le cadre de l'information sur l'ensemble des méthodes possibiles de modèles de classification binaire et sur les choix les plus pertinents pour ce sujet. Elle a aussi été utilisée pour les les tests unitaires des fonctions de `ml_workflow.py`.
