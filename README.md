@@ -28,18 +28,17 @@ Agathe Coignard
 
 Les transformations qui apprennent des paramètres (imputation, standardisation, ACP) sont ajustées **sur le train uniquement**, puis appliquées au test. La standardisation fait :
 
-$$
-z_{ij} = \frac{x_{ij} - \mu_j^{\text{train}}}{\sigma_j^{\text{train}}}
-$$
+$$z_{ij} = \frac{x_{ij} - \mu_j^{\text{train}}}{\sigma_j^{\text{train}}}$$
 
 ## Structure du dépôt
 
 ```
 .
-├── data/                      # datasets (spambase.*, diabetes_*.csv)
+├── Diabete/                   # dataset Diabetes (diabetes_binary_health_indicators_BRFSS2015.csv)
+├── spambase/                  # dataset Spambase (spambase.data, spambase.names, spambase.DOCUMENTATION)
 ├── ml_workflow.py             # toutes les fonctions du workflow
 ├── test_ml_workflow.py        # tests unitaires
-├── spambase.ipynb                 # analyse + résultats Spambase
+├── spambase.ipynb             # analyse + résultats Spambase
 ├── diabetes.ipynb             # analyse + résultats Diabetes
 ├── requirements.txt
 └── README.md
@@ -54,12 +53,12 @@ python -m venv .venv && source .venv/bin/activate    # Windows : .venv\Scripts\a
 pip install -r requirements.txt
 ```
 
-Le CSV Diabetes est à télécharger sur Kaggle et à placer dans `data/` s'il n'est pas versionné.
+Le CSV Diabetes est à télécharger sur Kaggle et à placer dans `Diabete/` s'il n'est pas versionné.
 
-Bibliothèques nécessaires pour l'exécution : numpy, pandas, scikit-learn, matplotlib, seaborn, jupyter, pytest
+Bibliothèques nécessaires pour l'exécution : numpy, pandas, scikit-learn, matplotlib, seaborn, jupyter, pytest, torch
 
 ```bash
-pip install numpy pandas scikit-learn matplotlib seaborn jupyter pytest
+pip install numpy pandas scikit-learn matplotlib seaborn jupyter pytest torch
 ```
 
 ## Utilisation: comment appeler les fonctions du workflow depuis un notebook
@@ -69,7 +68,7 @@ import ml_workflow as mw
 
 # Spambase : log(1+x) sur les features à queue lourde, puis standardisation
 X_train, X_test, y_train, y_test, tr = mw.prepare_data(
-    "spam", log_cols=mw.SPAM_HEAVY_TAILED)
+    "spam", log_cols=["capital_run_length_average", "capital_run_length_longest", "capital_run_length_total"])
 
 # Diabetes avec ACP gardant 90 % de la variance
 X_train, X_test, y_train, y_test, tr = mw.prepare_data(
@@ -89,4 +88,4 @@ pytest -q
 - Pas de sorties lourdes dans les commits de notebooks : faire *Restart & Run All* avant de commit.
 
 ## Utilisation de l'IA
-L'IA a été utilisée dans le cadre de l'information sur l'ensemble des méthodes possibiles de modèles de classification binaire et sur les choix les plus pertinents pour ce sujet. Elle a aussi été utilisée pour les les tests unitaires des fonctions de `ml_workflow.py`.
+L'IA a été utilisée dans le cadre de l'information sur l'ensemble des méthodes possibles de modèles de classification binaire et sur les choix les plus pertinents pour ce sujet. Elle a aussi été utilisée pour les tests unitaires des fonctions.
