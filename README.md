@@ -15,8 +15,8 @@ Agathe Coignard
 
 | Dataset | Source | Tâche | Taille | Particularités |
 |---|---|---|---|---|
-| **Spambase** | UCI | spam (1) / non-spam (0) | 4 601 e-mails × 57 features continues | 39 % de spam, 0 valeur manquante, 391 doublons, features à queue lourde (`capital_run_length_*`) ; les faux positifs coûtent cher |
-| **Diabetes Health Indicators (BRFSS 2015)** | Kaggle | diabétique ou prédiabétique (1) / non (0) | 253 680 personnes × 21 features | 14 % de positifs (déséquilibré), features surtout binaires/ordinales, 24 206 doublons |
+| **Spambase** | UCI | spam (1) / non-spam (0) | 4 601 e-mails × 57 features continues
+| **Diabetes Health Indicators (BRFSS 2015)** | Kaggle | diabétique ou prédiabétique (1) / non (0) | 253 680 personnes × 21 features | 14 % de positifs (déséquilibré)|
 
 ### Workflow
 
@@ -26,9 +26,7 @@ Agathe Coignard
 4. **Entraînement** avec sélection de features
 5. **Validation** et comparaison des modèles
 
-Les transformations qui apprennent des paramètres (imputation, standardisation, ACP) sont ajustées **sur le train uniquement**, puis appliquées au test. La standardisation fait :
-
-$$z_{ij} = \frac{x_{ij} - \mu_j^{\text{train}}}{\sigma_j^{\text{train}}}$$
+Les transformations qui apprennent des paramètres (imputation, standardisation, ACP) sont ajustées **sur le train uniquement**, puis appliquées au test.
 
 ## Structure du dépôt
 
@@ -50,42 +48,33 @@ $$z_{ij} = \frac{x_{ij} - \mu_j^{\text{train}}}{\sigma_j^{\text{train}}}$$
 git clone <url-du-depot>
 cd Project_Machine-Learning_Semester-1
 python -m venv .venv && source .venv/bin/activate    # Windows : .venv\Scripts\activate (mettre ça avant si ça ne marche pas Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser)
-pip install -r requirements.txt
 ```
-
-Le CSV Diabetes est à télécharger sur Kaggle et à placer dans `Diabete/` s'il n'est pas versionné.
 
 Bibliothèques nécessaires pour l'exécution : numpy, pandas, scikit-learn, matplotlib, seaborn, jupyter, pytest, torch
 
 ```bash
+pip install -r requirements.txt
+```
+ou 
+```bash
 pip install numpy pandas scikit-learn matplotlib seaborn jupyter pytest torch
 ```
 
-## Utilisation: comment appeler les fonctions du workflow depuis un notebook
-
-```python
-import ml_workflow as mw
-
-# Spambase : log(1+x) sur les features à queue lourde, puis standardisation
-X_train, X_test, y_train, y_test, tr = mw.prepare_data(
-    "spam", log_cols=["capital_run_length_average", "capital_run_length_longest", "capital_run_length_total"])
-
-# Diabetes avec ACP gardant 90 % de la variance
-X_train, X_test, y_train, y_test, tr = mw.prepare_data(
-    "diabetes", pca_components=0.9)
-```
+## Comment lancer les tests unitaires
 
 Tests :
 
 ```bash
 pytest -q
 ```
+16/16 passed : tous les tests unitaires sont validés.
 
 ## Conventions de travail en groupe
 
-- Une branche par fonctionnalité (`feature/feature-selection`, `feature/models-spam`…), fusionnée dans `main` via *merge request*.
-- Le code réutilisable va dans `ml_workflow.py` ; les notebooks se contentent de l'appeler et de commenter les résultats.
-- Pas de sorties lourdes dans les commits de notebooks : faire *Restart & Run All* avant de commit.
+- Le code utilisable est dans `ml_workflow.py` ; les notebooks se contentent de l'appeler et de commenter les résultats.
+- Répartition des tâches de façon équitable.
+- Création d'un groupe de discussion pour s'organiser et discuter de l'avancée du travail.
 
 ## Utilisation de l'IA
-L'IA a été utilisée dans le cadre de l'information sur l'ensemble des méthodes possibles de modèles de classification binaire et sur les choix les plus pertinents pour ce sujet. Elle a aussi été utilisée pour les tests unitaires des fonctions.
+L'IA a été utilisée pour s'informer sur l'ensemble des méthodes possibles et sur les choix les plus pertinents pour ce sujet. Elle a aussi été utilisée pour comprendre la syntaxe des tests unitaires ainsi qu'une partie de leur rédaction.
+Avant le rendu final, nous lui avons finalement demander de vérifier la cohérence des deux notebooks et s'il y avait des oublis.
