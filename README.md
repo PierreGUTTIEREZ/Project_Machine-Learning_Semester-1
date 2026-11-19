@@ -15,7 +15,7 @@ Agathe Coignard
 
 | Dataset | Source | Tâche | Taille | Particularités |
 |---|---|---|---|---|
-| **Spambase** | UCI | spam (1) / non-spam (0) | 4 601 e-mails × 57 features continues
+| **Spambase** | UCI | spam (1) / non-spam (0) | 4 601 e-mails × 57 features continues | 39% de spams |
 | **Diabetes Health Indicators (BRFSS 2015)** | Kaggle | diabétique ou prédiabétique (1) / non (0) | 253 680 personnes × 21 features | 14 % de positifs (déséquilibré)|
 
 ### Workflow
