@@ -1,13 +1,3 @@
-"""
-ml_workflow.py — Fonctions communes du projet UE Machine Learning
-
-Étapes couvertes pour l'instant:
-    1. Importer les données
-    2. Nettoyer et prétraiter (valeurs manquantes, doublons, centrage-réduction, ACP)
-    3. Séparer en train / test
-
-"""
-
 from pathlib import Path
 
 import numpy as np
